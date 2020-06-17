@@ -1,0 +1,37 @@
+switch trunk encapsulation dot1q
+switchport mode trunk
+switchport trunk native vlan 4000
+switch trunk allowed vlan 1,100,300,400,900,4000
+
+vlan 100
+exit
+vlan 300
+exit
+vlan 400
+exit
+vlan 900
+exit
+vlan 4000
+exit
+
+set target_vlan 200
+
+#build list of trunk ports to change
+set temp_trunk_ifaces [split [exec "show spanning-tree vlan 4000 | begin Gi"] "\n"]
+foreach tIface $temp_trunk_ifaces {
+  if [regexp {^([^ ]+) {2}.+ {2}.+ {2}.+ {2}.+ +([A-Za-z]+) .+} $tIface match tIfo iType ] {
+    puts "$tIfo is an uplink to another switch"
+    puts "$tIfo = tIfo"
+    puts "$iType = iType"
+    puts "$tIface = tIface"
+    if {$iType == "P2p"} {
+      ios_config "interface $tIfo" "switchport trunk allowed vlan add $target_vlan"
+    } elseif {$iType == "Edge"} {
+      puts "$tIface is NOT a an uplink to another switch"
+    }
+  }
+}
+
+
+
+[regexp {^([^ ]+) {2}.+ {2}.+ +([0-9]+) .+} $if_line match ifo vlan]
